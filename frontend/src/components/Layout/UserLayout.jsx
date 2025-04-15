@@ -1,20 +1,21 @@
-import React from 'react'
-import Header from '../Common/Header'
-import Footer from '../Common/Footer'
-import Home from '../../pages/Home/Home'
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Header from '../Common/Header';
+import Footer from '../Common/Footer';
 
 export default function UserLayout() {
-    return (
-        <>
-            {/* Header */}
-            <Header />
+  return (
+    <>
+      {/* Header */}
+      <Header />
 
-            {/* Main Content */}
-            <Home />
+      {/* Main Content */}
+      <main>
+        <Outlet /> 
+      </main>
 
-            {/* Footer */}
-            <Footer />
-
-        </>
-    )
+      {/* Footer */}
+      <Footer />
+    </>
+  );
 }

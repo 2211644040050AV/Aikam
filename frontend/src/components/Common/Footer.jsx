@@ -20,7 +20,7 @@ export default function Footer() {
     <motion.footer
     initial={{ opacity: 0, y: 50 }}    
     whileInView={{ opacity: 1, y: 0 }} 
-    transition={{ duration: 0.6, ease: 'easeOut' }}
+    transition={{ duration: 1.5, ease: 'easeOut' }}
     viewport={{ once: true }}
     className="py-12 bg-gray-900 text-white">
       <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 px-4 lg:px-0">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import {motion} from 'framer-motion';
 import { HiMagnifyingGlass } from 'react-icons/hi2';
 import { HiMiniXMark } from 'react-icons/hi2';
 
@@ -19,7 +20,12 @@ export default function Searchbar() {
 
 
   return (
-    <div className={`flex items-center justify-center w-full transition-all duration-300 ${isOpen ? "absolute top-0 left-0 w-full bg-white h-24 z-50" : "w-auto"} `}>
+
+    <motion.div
+    initial={{ opacity: 0, slide: 0 }}
+    whileInView={{ opacity: 1, slide: 1 }}
+    transition={{ duration: 1.5 }}
+    className={`flex items-center justify-center w-full transition-all duration-300 ${isOpen ? "absolute top-0 left-0 w-full bg-white h-24 z-50" : "w-auto"} `}>
       {isOpen ? (
         <form onSubmit={handleSearch}
           className="relative flex items-center justify-center w-full">
@@ -45,6 +51,6 @@ export default function Searchbar() {
           <HiMagnifyingGlass className="h-6 w-6" />
         </button>
       )}
-    </div>
+    </motion.div>
   )
 }

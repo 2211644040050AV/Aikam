@@ -25,7 +25,7 @@ export default function Navbar() {
            <motion.nav
              initial={{ opacity: 0, slide: 0 }}
              whileInView={{ opacity: 1, slide: 1 }}
-             transition={{ duration: 1 }} 
+             transition={{ duration: 1.5 }} 
             className='w-full z-40 sticky top-0 bg-white/90 backdrop-blur-md shadow-md px-6 py-3 flex justify-between items-center'>
                 {/* Left Logo */}
                 <div>

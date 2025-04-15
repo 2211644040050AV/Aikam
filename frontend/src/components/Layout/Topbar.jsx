@@ -9,7 +9,7 @@ export default function Topbar() {
         <motion.div
         initial={{ opacity: 0, slide: 0 }}
         whileInView={{ opacity: 1, slide: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 1.5 }}
         className='bg-[#9A65C1] text-white'>
             <div className='container mx-auto flex justify-between items-center py-3 px-4'>
                 <div className='hidden md:flex items-center space-x-4'>
