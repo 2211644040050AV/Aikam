@@ -10,7 +10,7 @@ export default function UserLayout() {
       <Header />
 
       {/* Main Content */}
-      <main>
+      <main  className="pt-[110px]">
         <Outlet /> 
       </main>
 

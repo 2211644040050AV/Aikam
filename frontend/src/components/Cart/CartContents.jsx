@@ -1,10 +1,10 @@
-import React from 'react'
-import { RiDeleteBin6Line } from 'react-icons/ri'
-import { motion } from 'framer-motion'
+import React, { useState } from 'react';
+import { RiDeleteBin6Line } from 'react-icons/ri';
+import { motion } from 'framer-motion';
 
 export default function CartContents() {
-
-  const cartProducts = [
+  // Cart products state
+  const [cartProducts, setCartProducts] = useState([
     {
       id: 1,
       name: "Product 1",
@@ -50,38 +50,79 @@ export default function CartContents() {
       price: 50.00,
       image: "https://picsum.photos/200?random=5",
     },
-  ]
+  ]);
+
+  // Update quantity
+  const updateQuantity = (id, action) => {
+    setCartProducts(prevProducts =>
+      prevProducts.map(product =>
+        product.id === id
+          ? { ...product, quantity: action === 'increment' ? product.quantity + 1 : product.quantity - 1 }
+          : product
+      )
+    );
+  };
+
+  // Remove product from cart with animation
+  const removeProduct = (id) => {
+    setCartProducts(prevProducts => prevProducts.filter(product => product.id !== id));
+  };
 
   return (
-    <motion.div
-    initial={{ opacity: 0, scale: 0.8 }} 
-    whileInView={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5, ease: 'easeOut' }}
-    viewport={{ once: true }}>
-      {
-        cartProducts.map ((product, index) => (
-          <div key={product.id} className='flex items-start justify-between py-3 border-b '>
-            <div className='flex items-start'>
-              <img src={product.image} alt={product.name} className='w-20 h-24 object-cover mr-4 rounded' />
-              <div>
-                <h3>{product.name}</h3>
-                <p className='text-sm text-gray-500'>size: {product.size} | color: {product.color}</p>
-                <div className='flex items-center mt-2'>
-                  <button className='border rounded px-3 py-1 text-xl font-medium '>-</button>
-                  <span className='mx-4'>{product.quantity}</span>
-                  <button className='border rounded px-3 py-1 text-xl font-medium '>+</button>
-                </div>
+    <motion.div layout>
+      {cartProducts.map((product) => (
+        <motion.div
+          key={product.id}
+          className='flex items-start justify-between py-3 border-b'
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className='flex items-start'>
+            <img src={product.image} alt={product.name} className='w-20 h-24 object-cover mr-4 rounded' />
+            <div>
+              <h3>{product.name}</h3>
+              <p className='text-sm text-gray-500'>size: {product.size} | color: {product.color}</p>
+              <div className='flex items-center mt-2'>
+                <button
+                  onClick={() => updateQuantity(product.id, 'decrement')}
+                  className='border rounded px-3 py-1 text-xl font-medium'
+                  disabled={product.quantity <= 1}
+                >
+                  -
+                </button>
+                <motion.span
+                  className='mx-4'
+                  key={product.quantity} // This key ensures the motion transition is triggered on quantity change
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {product.quantity}
+                </motion.span>
+                <button
+                  onClick={() => updateQuantity(product.id, 'increment')}
+                  className='border rounded px-3 py-1 text-xl font-medium'
+                >
+                  +
+                </button>
               </div>
             </div>
-            <div>
-            <p>₹ {product.price.toLocaleString()}</p>
-            <button>
-              <RiDeleteBin6Line className='h-6 w-6 mt-2 text-red-600' />
-            </button>
-            </div>
           </div>
-        ))
-      }      
+          <div>
+            <p>₹ {product.price.toLocaleString()}</p>
+            <motion.button
+              onClick={() => removeProduct(product.id)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <RiDeleteBin6Line className='h-6 w-6 mt-2 text-red-600' />
+            </motion.button>
+          </div>
+        </motion.div>
+      ))}
     </motion.div>
-  )
+  );
 }

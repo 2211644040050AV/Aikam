@@ -1,9 +1,16 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 export default function Service() {
     return (
-        <section className="bg-white text-black w-5/5 py-4 px-4 lg:px-12 sm:py-2 rounded shadow">
-            <h2 className="text-xl font-bold">
+        <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            viewport={{ amount: 0.3 }}
+            className="bg-white text-black w-full py-4 px-4 lg:px-12 sm:py-2 rounded shadow"
+        >
+            <h2 className="text-xl font-bold text-center py-5">
                 Stay Healthy with <span className="text-[#9A65C1]">AIKAM INDIA</span>
             </h2>
             <p>AI Enabled Dark Store for all Medicines & healthcare needs.</p>
@@ -21,6 +28,6 @@ export default function Service() {
                     https://www.aikam.in/
                 </a>
             </p>
-        </section>
+        </motion.section>
     );
 }

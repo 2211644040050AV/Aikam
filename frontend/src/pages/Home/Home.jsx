@@ -2,18 +2,22 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Avtar from '../../assets/dicon.png';
 import ContactForm from './ContactForm';
+import Medicines from '../../components/Products/Medicines';
 import Service from './Service';
 import Testimonials from './Testimonials';
 
 export default function Home() {
   return (
     <div className="bg-white text-black">
+
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -50 }}
+        initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.5 }}
-        className="text-center py-6">
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        viewport={{ amount: 0.3 }}
+        className="text-center py-4"
+      >
         <h1 className="text-3xl font-bold">
           <span>Lucknow ki Pharmacy</span> <span className="mx-2">|</span>
           <span>लखनऊ की फार्मेसी</span>
@@ -23,10 +27,12 @@ export default function Home() {
 
       {/* Order + Form */}
       <motion.div
-        initial={{ opacity: 0, x: -100 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 1.5 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 lg:px-12 py-6">
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        viewport={{ amount: 0.3 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 lg:px-12 py-6"
+      >
         {/* LEFT: CTA Section */}
         <div className="flex flex-col items-center justify-center">
           <img src={Avtar} alt="icon" className="w-3/4 sm:w-1/2 md:w-1/3 lg:w-2/4 h-auto mb-4 mx-auto" />
@@ -58,25 +64,32 @@ export default function Home() {
 
         {/* RIGHT: Contact Form */}
         <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1.5 }}
-          className='flex flex-col justify-center'>
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+          viewport={{ amount: 0.3 }}
+          className='flex flex-col justify-center'
+        >
           <ContactForm />
         </motion.div>
       </motion.div>
 
+      {/* Medicines */}
+      <div>
+        <Medicines />
+      </div>
+
       {/* Services and Testimonials */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.5, ease: 'easeOut' }}
-        viewport={{ once: true }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2 lg:px-8 py-4">
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+        viewport={{ amount: 0.3 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 px-2 lg:px-8 py-4"
+      >
         <Service />
         <Testimonials />
       </motion.div>
-
 
     </div>
   );

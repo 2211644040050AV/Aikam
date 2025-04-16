@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import {motion} from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import {
   FaMapMarkerAlt,
   FaPhoneAlt,
@@ -14,17 +14,17 @@ import {
 import { Link } from 'react-router-dom';
 import BackToTop from './BackToTop';
 
+
 export default function Footer() {
-
   return (
-    <motion.footer
-    initial={{ opacity: 0, y: 50 }}    
-    whileInView={{ opacity: 1, y: 0 }} 
-    transition={{ duration: 1.5, ease: 'easeOut' }}
-    viewport={{ once: true }}
-    className="py-12 bg-gray-900 text-white">
+<motion.footer
+  initial={{ opacity: 0, y: 50 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 1.2, ease: 'easeOut' }}
+  viewport={{ amount: 0.3 }} 
+  className="py-12 bg-gray-900 text-white"
+>
       <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 px-4 lg:px-0">
-
         {/* Address Section */}
         <div>
           <h3 className="text-lg font-semibold mb-4 scudo">Find Us</h3>
@@ -41,7 +41,11 @@ export default function Footer() {
             <FaPhoneAlt /> +91 8861496927
           </p>
           <p className="flex items-center gap-2">
-            <FaEnvelope /> aikamindia@gmail.com, contact@aikam.in
+            <FaEnvelope />
+            <span>
+              <a href="mailto:aikamindia@gmail.com" className="hover:underline">aikamindia@gmail.com</a>,{' '}
+              <a href="mailto:contact@aikam.in" className="hover:underline">contact@aikam.in</a>
+            </span>
           </p>
           <p className="flex items-center gap-2">
             <FaRegRegistered /> D.L. No.: UP32200003836, UP32210003831
@@ -86,13 +90,16 @@ export default function Footer() {
             </li>
           </ul>
         </div>
-
       </div>
-      <div className=" text-center py-4 mt-8">
-        <p className=" text-sm">
+
+      {/* Copyright */}
+      <div className="text-center py-4 mt-8 text-sm border-t border-gray-700 px-4">
+        <p>
           © 2024 Aikam India. All rights reserved. All medicines are dispensed in compliance with the Drugs and Cosmetics Act, 1940 and Drugs and Cosmetics Rules, 1945.
         </p>
       </div>
+
+      {/* Back to Top Button */}
       <BackToTop />
     </motion.footer>
   );
