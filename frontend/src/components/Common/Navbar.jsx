@@ -53,6 +53,7 @@ export default function Navbar() {
 
                 {/* Right Icons */}
                 <div className="flex items-center space-x-4">
+                    <Link to="/admin" className='block bg-[#9A65C1] px-2 py-1 rounded text-sm  text-white hover:bg-[#6a4d7f] transition-all'>Admin</Link>
                     {/* Profile Icon */}
                     <Link to="/profile" className='hover:text-black' aria-label="User Profile">
                         <HiOutlineUser className='h-6 w-6 text-gray-700' />
