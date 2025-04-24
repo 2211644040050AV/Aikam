@@ -1,4 +1,4 @@
-require("dotenv").config(); // 🔥 This loads the .env variables
+require("dotenv").config(); 
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");

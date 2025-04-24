@@ -4,9 +4,6 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// @route   POST /api/products
-// @desc    Create a new product
-// @access  Private
 router.post("/", protect, async (req, res) => {
   console.log("Request body:", req.body);  // Add this line to log the body
   try {
@@ -33,7 +30,6 @@ router.post("/", protect, async (req, res) => {
       sideEffects,
     } = req.body;
 
-    // Validation (optional but good practice)
     if (!name || !modelNumber || !brand || !category || !price) {
       return res.status(400).json({ message: "Please fill all required fields" });
     }
