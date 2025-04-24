@@ -14,6 +14,8 @@ import AdminLayout from './components/Admin/AdminLayout';
 import AdminHome from './pages/Admin/AdminHome';
 import UserManagement from './components/Admin/UserManagement';
 import ProductManagement from './components/Admin/ProductManagement';
+import AddProduct from './components/Admin/CreateProduct'
+import UpdateProduct from './components/Admin/UpdateProduct'
 
 export default function App() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
           <Route index element={<AdminHome />} />
           <Route path="users" element={<UserManagement />} />          
           <Route path="products" element={<ProductManagement />} />
+          <Route path="create" element={<AddProduct />} />
+          <Route path="update" element={<UpdateProduct />} />
         </Route>
       </Routes>
     </BrowserRouter>

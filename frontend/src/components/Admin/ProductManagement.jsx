@@ -24,7 +24,17 @@ export default function ProductManagement() {
 
   return (
     <div className='max-w-7xl mx-auto p-6'>
-      <h2 className='text-2xl font-bold mb-6'>Product Management</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Product Management</h2>
+
+        <Link
+          to="/admin/create"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-200"
+        >
+          Add Product
+        </Link>
+      </div>
+
 
       <div className='overflow-auto shadow-md sm:rounded-lg'>
         <table className='min-w-full text-lg text-gray-500'>
