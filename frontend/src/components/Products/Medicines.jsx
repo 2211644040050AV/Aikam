@@ -70,7 +70,7 @@ export default function Medicines() {
         {/* Buttons */}
         <div className="flex flex-col-reverse items-center gap-2 mt-6 lg:mt-0 lg:flex-row lg:absolute lg:right-0 lg:bottom-0">
           <Link
-            to="/products"
+            to="/collection"
             className="px-4 py-2 text-sm font-medium border rounded bg-white hover:bg-gray-100"
           >
             See All
@@ -111,7 +111,7 @@ export default function Medicines() {
                   className="w-full h-[500px] object-cover rounded shadow-md transition duration-300 group-hover:scale-105"
                   draggable="false"
                 />
-                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4 rounded-b-lg">
+                <div className="absolute bottom-0 left-0 right-0  bg-opacity-50 text-white p-4 rounded-b-lg">
                   <Link to={`/product/${product._id}`} className="block">
                     <h4 className="font-medium">{product.name}</h4>
                     <p className="mt-1">₹{product.price}</p>

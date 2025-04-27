@@ -1,128 +1,214 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { motion } from 'framer-motion';
 
 export default function CartContents() {
-  // Cart products state
-  const [cartProducts, setCartProducts] = useState([
-    {
-      id: 1,
-      name: "Product 1",
-      size: "M",
-      color: "Red",
-      quantity: 1,
-      price: 10.00,
-      image: "https://picsum.photos/200?random=1",
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      size: "L",
-      color: "Blue",
-      quantity: 2,
-      price: 20.00,
-      image: "https://picsum.photos/200?random=2",
-    },
-    {
-      id: 3,
-      name: "Product 3",
-      size: "S",
-      color: "Green",
-      quantity: 1,
-      price: 30.00,
-      image: "https://picsum.photos/200?random=3",
-    },
-    {
-      id: 4,
-      name: "Product 4",
-      size: "XL",
-      color: "Black",
-      quantity: 3,
-      price: 40.00,
-      image: "https://picsum.photos/200?random=4",
-    },
-    {
-      id: 5,
-      name: "Product 5",
-      size: "XXL",
-      color: "White",
-      quantity: 1,
-      price: 50.00,
-      image: "https://picsum.photos/200?random=5",
-    },
-  ]);
 
-  // Update quantity
-  const updateQuantity = (id, action) => {
-    setCartProducts(prevProducts =>
-      prevProducts.map(product =>
-        product.id === id
-          ? { ...product, quantity: action === 'increment' ? product.quantity + 1 : product.quantity - 1 }
-          : product
-      )
-    );
+  const navigate = useNavigate();
+  const handleCheckout = () => {
+    navigate("/checkout");
+  }
+
+  const [cartProducts, setCartProducts] = useState([]);
+
+  // Fetch cart products from localStorage
+  const fetchCart = () => {
+    try {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      // Filter out any invalid products
+      const validCart = storedCart.filter(item => item && item.product);
+
+      setCartProducts(validCart);
+
+      // If the cart is broken, repair it immediately
+      if (storedCart.length !== validCart.length) {
+        localStorage.setItem('cart', JSON.stringify(validCart));
+      }
+    } catch (error) {
+      console.error('Error parsing cart from localStorage:', error);
+      setCartProducts([]);
+      localStorage.removeItem('cart');
+    }
   };
 
-  // Remove product from cart with animation
-  const removeProduct = (id) => {
-    setCartProducts(prevProducts => prevProducts.filter(product => product.id !== id));
+  useEffect(() => {
+    fetchCart();
+
+    const handleCartUpdated = () => {
+      fetchCart();
+    };
+
+    window.addEventListener('cart-updated', handleCartUpdated);
+
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdated);
+    };
+  }, []);
+
+  const updateQuantity = (index, action) => {
+    const updatedCart = [...cartProducts];
+    const item = updatedCart[index];
+
+    if (!item.product) return; // Prevent errors if item.product is null
+
+    if (action === 'increment') {
+      item.quantity += 1;
+    } else if (action === 'decrement' && item.quantity > 1) {
+      item.quantity -= 1;
+    }
+
+    setCartProducts(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('cart-updated')); // 🛒 Notify others
+  };
+
+  const removeProduct = (index) => {
+    const updatedCart = cartProducts.filter((_, idx) => idx !== index);
+    setCartProducts(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('cart-updated')); // 🛒 Notify others
+  };
+
+  // Calculate total price for the cart after discount
+  const calculateTotalPrice = () => {
+    return cartProducts.reduce((total, item) => {
+      const discountedPrice = item.product.price - (item.product.price * item.product.discount) / 100;
+      return total + discountedPrice * item.quantity;
+    }, 0);
+  };
+
+  // Calculate total discount
+  const calculateTotalDiscount = () => {
+    return cartProducts.reduce((total, item) => {
+      const discountAmount = (item.product.price * item.product.discount) / 100;
+      return total + discountAmount * item.quantity;
+    }, 0);
+  };
+
+  // Calculate total delivery charges
+  const calculateTotalDelivery = () => {
+    return cartProducts.reduce((total, item) => {
+      return total + (item.product.deliveryCharge || 0) * item.quantity;
+    }, 0);
+  };
+
+  // Final Total after discount and adding delivery charges
+  const calculateFinalTotal = () => {
+    return calculateTotalPrice() + calculateTotalDelivery();
   };
 
   return (
     <motion.div layout>
-      {cartProducts.map((product) => (
-        <motion.div
-          key={product.id}
-          className='flex items-start justify-between py-3 border-b'
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className='flex items-start'>
-            <img src={product.image} alt={product.name} className='w-20 h-24 object-cover mr-4 rounded' />
-            <div>
-              <h3>{product.name}</h3>
-              <p className='text-sm text-gray-500'>size: {product.size} | color: {product.color}</p>
-              <div className='flex items-center mt-2'>
-                <button
-                  onClick={() => updateQuantity(product.id, 'decrement')}
-                  className='border rounded px-3 py-1 text-xl font-medium'
-                  disabled={product.quantity <= 1}
+      {cartProducts.length === 0 ? (
+        <div className="w-full h-100 text-3xl text-red-800 flex items-center justify-center">
+          <p>
+            Your cart is empty.{' '}
+            <a href="/collection" className="text-blue-500">Browse Products</a> or{' '}
+            <a href="/" className="text-blue-500">Return to Home</a>
+          </p>
+        </div>
+      ) : (
+        <>
+          {cartProducts.map((item, index) => {
+            if (!item.product) return null; // Skip if product data is missing
+            const discountedPrice = item.product.price - (item.product.price * item.product.discount) / 100;
+            const itemTotalPrice = discountedPrice * item.quantity;
+
+            return (
+              <div key={index} className="block m-2 p-2 w-full lg:w-4/5 md:4/4 sm:w-full">
+                <h2 className="text-2xl sm:text-3xl px-3 py-1">Your Cart</h2>
+                <motion.div
+                  className="flex items-start justify-between py-4 border-b"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  -
-                </button>
-                <motion.span
-                  className='mx-4'
-                  key={product.quantity} // This key ensures the motion transition is triggered on quantity change
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {product.quantity}
-                </motion.span>
-                <button
-                  onClick={() => updateQuantity(product.id, 'increment')}
-                  className='border rounded px-3 py-1 text-xl font-medium'
-                >
-                  +
-                </button>
+                  <div className="flex items-start">
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="w-auto h-20 sm:h-24 object-cover mx-4 rounded"
+                    />
+                    <div>
+                      <h3 className="text-xl sm:text-base">{item.product.name}</h3>
+                      <div className="flex items-center mt-2">
+                        <button
+                          onClick={() => updateQuantity(index, 'decrement')}
+                          className="border rounded px-3 py-1 text-lg sm:text-xl font-medium"
+                          disabled={item.quantity <= 1}
+                        >
+                          -
+                        </button>
+                        <motion.span
+                          className="mx-4"
+                          key={item.quantity}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {item.quantity}
+                        </motion.span>
+                        <button
+                          onClick={() => updateQuantity(index, 'increment')}
+                          className="border rounded px-3 py-1 text-lg sm:text-xl font-medium"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-rows-1 sm:grid-cols-2 items-center justify-center my-2 mx-1 gap-4">
+                    <p className="text-2xl sm:text-base text-center sm:text-left">
+                      ₹ {itemTotalPrice.toLocaleString()}
+                    </p>
+                    <motion.button
+                      onClick={() => removeProduct(index)}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="self-center justify-self-center sm:justify-self-end"
+                    >
+                      <RiDeleteBin6Line className="h-6 w-6 text-red-600" />
+                    </motion.button>
+                  </div>
+                </motion.div>
               </div>
+            );
+          })}
+
+          {/* Cart Breakdown */}
+          <div className="w-full p-4 border-t mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xl font-semibold">Total Price (After Discount):</p>
+              <p className="text-xl">₹ {calculateTotalPrice().toLocaleString()}</p>
             </div>
+
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xl font-semibold">Total Discount:</p>
+              <p className="text-xl text-green-600">- ₹ {calculateTotalDiscount().toLocaleString()}</p>
+            </div>
+
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xl font-semibold">Total Delivery Charges:</p>
+              <p className="text-xl">₹ {calculateTotalDelivery().toLocaleString()}</p>
+            </div>
+
+            <div className="flex justify-between items-center mt-4">
+              <p className="text-2xl font-bold">Final Total:</p>
+              <p className="text-2xl font-bold">₹ {calculateFinalTotal().toLocaleString()}</p>
+            </div>
+            <button
+            onClick={handleCheckout}
+             className="bg-blue-500 hover:bg-blue-600 hover:cursor-pointer text-white px-4 py-2 rounded-lg mt-6 sm:w-full md:w-auto ml-auto block">
+              Proceed to Checkout
+            </button>
+
           </div>
-          <div>
-            <p>₹ {product.price.toLocaleString()}</p>
-            <motion.button
-              onClick={() => removeProduct(product.id)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <RiDeleteBin6Line className='h-6 w-6 mt-2 text-red-600' />
-            </motion.button>
-          </div>
-        </motion.div>
-      ))}
+        </>
+      )}
     </motion.div>
   );
 }

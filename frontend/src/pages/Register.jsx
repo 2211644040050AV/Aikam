@@ -1,24 +1,53 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '../redux/slices/authSlice';
+import { mergeCart } from '../redux/slices/cartSlice'; 
 import SignUp from '../assets/signup.jpg';
-import { registerUser } from '../redux/slices/authSlice'; // ✅ Corrected import
-import { useDispatch } from 'react-redux';
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { user, guestId } = useSelector((state) => state.auth);
+  const { cart } = useSelector((state) => state.cart);
+
+  const redirect = new URLSearchParams(location.search).get("redirect") || "/";
+  const isCheckoutRedirect = redirect.includes("checkout");
+
+  useEffect(() => {
+    if (user) {
+      if (cart?.products?.length > 0 && guestId) {
+        dispatch(mergeCart({ guestId, user })).then(() => {
+          navigate(isCheckoutRedirect ? "/checkout" : "/");
+        });
+      } else {
+        navigate(isCheckoutRedirect ? "/checkout" : "/");
+      }
+    }
+  }, [user, guestId, cart, navigate, isCheckoutRedirect, dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(registerUser({ name, email, password }));
+    dispatch(registerUser({ name, email, password }))
+      .unwrap()
+      .then(() => {
+        navigate(redirect);
+      })
+      .catch((err) => {
+        console.error("Registration failed:", err);
+      });
   };
 
   return (
     <div className='flex'>
       <div className='w-full md:w-1/2 flex flex-col justify-center items-center p-5 md:p-10'>
-        <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-5 rounded-lg border shadow-sm ">
+        <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-5 rounded-lg border shadow-sm">
           <div className='flex justify-center mb-5'>
             <h2 className='text-2xl font text-[#431861] medium'>Aikam</h2>
           </div>
@@ -66,7 +95,9 @@ export default function Register() {
 
           <p className='mt-6 text-center text-sm'>
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-500">Sign In</Link>
+            <Link to={`/login?redirect=${encodeURIComponent(redirect)}`} className="text-blue-500">
+              Sign In
+            </Link>
           </p>
         </form>
       </div>

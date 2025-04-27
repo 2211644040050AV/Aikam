@@ -1,14 +1,18 @@
-import { createSlice, createAsyncThunk, rejectWithValue } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Fetch users for admin
-export const fetchUsers = createAsyncThunk("admin/fetchUsers", async () => {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
-        },
-    });
-    return response.data; // Ensure data is returned
+export const fetchUsers = createAsyncThunk("admin/fetchUsers", async (_, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        return rejectWithValue(error.response.data);
+    }
 });
 
 // Add a new user
@@ -23,9 +27,9 @@ export const addUser = createAsyncThunk("admin/addUser", async (userData, { reje
                 },
             }
         );
-        return response.data; // Return the response data
+        return response.data;
     } catch (error) {
-        return rejectWithValue(error.response.data); // Use rejectWithValue to handle errors
+        return rejectWithValue(error.response.data);
     }
 });
 
@@ -41,23 +45,23 @@ export const updateUser = createAsyncThunk("admin/updateUser", async (userData, 
                 },
             }
         );
-        return response.data; // Return the updated user data
+        return response.data;
     } catch (error) {
-        return rejectWithValue(error.response.data); // Use rejectWithValue to handle errors
+        return rejectWithValue(error.response.data);
     }
 });
 
 // Delete a user
 export const deleteUser = createAsyncThunk("admin/deleteUser", async (userId, { rejectWithValue }) => {
     try {
-        const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`, {
+        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("userToken")}`,
             },
         });
-        return userId; // Return the ID of the deleted user
+        return userId;
     } catch (error) {
-        return rejectWithValue(error.response.data); // Handle errors with rejectWithValue
+        return rejectWithValue(error.response.data);
     }
 });
 
@@ -73,7 +77,7 @@ const adminSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            // Fetch Users Cases
+            // Fetch Users
             .addCase(fetchUsers.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -84,31 +88,30 @@ const adminSlice = createSlice({
             })
             .addCase(fetchUsers.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload.message;
+                state.error = action.payload?.message || "Failed to fetch users";
             })
 
-            // Add User Cases
+            // Add User
             .addCase(addUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(addUser.fulfilled, (state, action) => {
                 state.loading = false;
-                state.users.push(action.payload); // Add new user to state
+                state.users.push(action.payload);
             })
             .addCase(addUser.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload.message;
+                state.error = action.payload?.message || "Failed to add user";
             })
 
-            // Update User Cases
+            // Update User
             .addCase(updateUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(updateUser.fulfilled, (state, action) => {
                 state.loading = false;
-                // Find the user to update and replace with the updated user
                 const index = state.users.findIndex((user) => user.id === action.payload.id);
                 if (index !== -1) {
                     state.users[index] = action.payload;
@@ -116,22 +119,21 @@ const adminSlice = createSlice({
             })
             .addCase(updateUser.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload.message;
+                state.error = action.payload?.message || "Failed to update user";
             })
 
-            // Delete User Cases
+            // Delete User
             .addCase(deleteUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(deleteUser.fulfilled, (state, action) => {
                 state.loading = false;
-                // Remove the deleted user from the users list
                 state.users = state.users.filter(user => user.id !== action.payload);
             })
             .addCase(deleteUser.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload.message;
+                state.error = action.payload?.message || "Failed to delete user";
             });
     },
 });
