@@ -1,24 +1,31 @@
-import React, { useEffect } from 'react'
-import MyOrder from './MyOrder'
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import MyOrder from './MyOrder';
 
 export default function Profile() {
-
-  const {user} = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if(!user) {
+    if (!user) {
       navigate("/login");
     }
   }, [user, navigate]);
 
   const handleLogout = () => {
-    dispatch(logout());
-    dispatch(clearCart());
-    navigate("/login");
+    dispatch({ type: 'auth/logout' });
+    dispatch({ type: 'cart/clearCart' });
+    navigate("/");
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
@@ -27,11 +34,11 @@ export default function Profile() {
         <div className='flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 items-start'>
 
           <div className="w-full md:w-1/3 lg:w-1/4 shadow-md rounded-lg p-6">
-            <h1 className='text-2xl md:text-3xl font-bold mb-4'>{user?.name}</h1>
-            <p className='text-lg text-gray-600 mb-4'>{user?.email}</p>
+            <h1 className='text-2xl md:text-3xl font-bold mb-4'>{user.name}</h1>
+            <p className='text-lg text-gray-600 mb-4'>{user.email}</p>
             <button 
-            onClick={handleLogout}
-            className='w-full bg-[#9A65C1] text-white py-2 px-4 rounded hover:bg-[#36025c] transition-all'>
+              onClick={handleLogout}
+              className='w-full bg-[#9A65C1] text-white py-2 px-4 rounded hover:bg-[#36025c] transition-all'>
               Log Out
             </button>
           </div>
@@ -43,5 +50,5 @@ export default function Profile() {
         </div>
       </div>
     </div>
-  )
+  );
 }

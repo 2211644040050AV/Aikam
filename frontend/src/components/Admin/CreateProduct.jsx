@@ -1,158 +1,187 @@
 import React, { useState, useEffect } from 'react';
-import BrandModal from '../Modals/BrandModal';
-import CategoryModal from '../Modals/CategoryModal';
-import SubcategoryModal from '../Modals/SubcategoryModal';
+import axios from 'axios';
+
+function InputField({ label, name, value, onChange, type = "text" }) {
+  return (
+    <div className="mb-4">
+      <label className="block text-gray-700">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full p-2 border rounded"
+      />
+    </div>
+  );
+}
 
 export default function CreateProduct() {
+  const [formData, setFormData] = useState({
+    name: '',
+    modelNumber: '',
+    brand: '',
+    category: '',
+    subcategory: '',
+    image: null,
+    stock: '',
+    price: '',
+    discount: '',
+    deliveryCharge: '',
+    expiryDate: '',
+    dosageForm: '',
+    strength: '',
+    composition: '',
+    usageInstructions: '',
+    warnings: '',
+    sideEffects: '',
+    description: '',
+    prescriptionRequired: false,
+    status: true
+  });
 
-  useEffect(() => {
-    setBrands([{ _id: 1, name: "Cipla" }]);
-    setCategories([{ _id: 1, name: "Tablets" }]);
-    setSubcategories([{ _id: 1, name: "Pain Relief" }]);
-  }, []);
-
-
+  const [imagePreview, setImagePreview] = useState(null);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
 
-  const [showBrandModal, setShowBrandModal] = useState(false);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
-
-  const [imagePreview, setImagePreview] = useState(null);
-  const [brandSearch, setBrandSearch] = useState('');
-
-  const [formData, setFormData] = useState({
-    name: "",
-    modelNumber: "",
-    brand: "",
-    category: "",
-    subcategory: "",
-    stock: "",
-    price: "",
-    discount: "",
-    deliveryCharge: "",
-    status: false,
-    description: "",
-    image: null,
-    expiryDate: "",
-    prescriptionRequired: false,
-    dosageForm: "",
-    strength: "",
-    composition: "",
-    usageInstructions: "",
-    warnings: "",
-    sideEffects: "",
-  });
-
   useEffect(() => {
-    setBrands([{ _id: 1, name: "Cipla" }, { _id: 2, name: "Sun Pharma" }, { _id: 3, name: "Pfizer" }]);
-    setCategories([{ _id: 1, name: "Tablets" }]);
-    setSubcategories([{ _id: 1, name: "Pain Relief" }]);
+    fetchOptions();
   }, []);
 
-  const filteredBrands = brands
-    .filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Fetch data from API
+  const fetchOptions = async () => {
+    try {
+      const [brandRes, categoryRes, subcategoryRes] = await Promise.all([
+        axios.get('http://localhost:9000/api/brands'),
+        axios.get('http://localhost:9000/api/categories'),
+        axios.get('http://localhost:9000/api/subcategories'),
+      ]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (type === "checkbox") {
-      setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else if (type === "file") {
-      const file = files[0];
-      setFormData((prev) => ({ ...prev, image: file }));
-      if (file) {
-        setImagePreview(URL.createObjectURL(file));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      console.log('Brands:', brandRes.data);
+      console.log('Categories:', categoryRes.data);
+      console.log('Subcategories:', subcategoryRes.data);
+
+      if (brandRes.data) setBrands(brandRes.data);
+      if (categoryRes.data) setCategories(categoryRes.data);
+      if (subcategoryRes.data) setSubcategories(subcategoryRes.data);
+    } catch (err) {
+      console.error('Error fetching options:', err);
     }
   };
 
-  const handleSubmit = (e) => {
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+
+    if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (type === 'file') {
+      const file = files[0];
+      setFormData(prev => ({ ...prev, image: file }));
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      if (name === 'category') {
+        // Reset subcategory when category is changed
+        setFormData(prev => {
+          console.log('Category changed, resetting subcategory');
+          return { ...prev, category: value, subcategory: '' };
+        });
+      } else {
+        setFormData(prev => {
+          console.log(`${name} changed to: ${value}`);
+          return { ...prev, [name]: value };
+        });
+      }
+    }
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    const data = new FormData();
+    for (const key in formData) {
+      if (key === "image" && formData.image) {
+        data.append("image", formData.image);
+      } else {
+        data.append(key, formData[key]);
+      }
+    }
+
+    try {
+      const res = await axios.post('http://localhost:9000/api/products', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      alert("Product created successfully!");
+      console.log(res.data);
+    } catch (err) {
+      console.error("Product creation failed:", err);
+      alert("Product creation failed!");
+    }
   };
 
   return (
-    <div className='max-w-7xl mx-auto p-6'>
+    <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
-      <div className='p-3 bg-white shadow rounded-lg mb-8'>
+      <div className="p-3 bg-white shadow rounded-lg mb-8">
         <form onSubmit={handleSubmit}>
           {/* Name & Model */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Product Name</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} className='w-full p-2 border rounded' required />
-          </div>
+          <InputField label="Product Name" name="name" value={formData.name} onChange={handleChange} />
+          <InputField label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} />
 
-          <div className="mb-4">
-            <label className="block text-gray-700">Model Number</label>
-            <input type="text" name="modelNumber" value={formData.modelNumber} onChange={handleChange} className='w-full p-2 border rounded' required />
-          </div>
-
+          {/* Brand, Category, Subcategory Selects */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Brand Select Button */}
             <div className="mb-4">
-              <label className="block text-gray-700 mb-1">Brand</label>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">
-                  {formData.brand || "Not selected"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowBrandModal(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Select
-                </button>
-              </div>
+              <label className="block text-gray-700">Brand</label>
+              <select name="brand" value={formData.brand} onChange={handleChange} className="w-full p-2 border rounded">
+                <option value="">Select a brand</option>
+                {brands.map(b => (
+                  <option key={b._id} value={b._id}>{b.name}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Category Select Button */}
             <div className="mb-4">
-              <label className="block text-gray-700 mb-1">Category</label>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">
-                  {formData.category || "Not selected"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryModal(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Select
-                </button>
-              </div>
+              <label className="block text-gray-700">Category</label>
+              <select name="category" value={formData.category} onChange={handleChange} className="w-full p-2 border rounded">
+                <option value="">Select a category</option>
+                {categories.map(c => (
+                  <option key={c._id} value={c._id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Subcategory Select Button */}
             <div className="mb-4">
-              <label className="block text-gray-700 mb-1">Subcategory</label>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">
-                  {formData.subcategory || "Not selected"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowSubcategoryModal(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Select
-                </button>
-              </div>
+              <label className="block text-gray-700">Subcategory</label>
+              <select
+                name="subcategory"
+                value={formData.subcategory}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Select a subcategory</option>
+                {subcategories
+                  .filter(sc => sc.category._id === formData.category) // Filtering subcategories based on selected category
+                  .map(sc => (
+                    <option key={sc._id} value={sc._id}>
+                      {sc.name}
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
 
           {/* Image Upload */}
           <div className="mb-4">
             <label className="block text-gray-700">Product Image</label>
-            <input type="file" accept="image/*" onChange={handleChange} name="image" className='w-full p-2 border rounded' />
+            <input type="file" accept="image/*" onChange={handleChange} name="image" className="w-full p-2 border rounded" />
             {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 w-40 h-40 object-cover rounded border" />}
           </div>
 
-          {/* Grid Inputs */}
+          {/* Other fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField label="Stock" name="stock" value={formData.stock} onChange={handleChange} />
             <InputField label="Price" name="price" value={formData.price} onChange={handleChange} />
@@ -170,7 +199,13 @@ export default function CreateProduct() {
           {/* Description */}
           <div className="mb-4 mt-4">
             <label className="block text-gray-700">Description</label>
-            <textarea name="description" value={formData.description} onChange={handleChange} className="w-full p-2 border rounded" rows="3" />
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              rows="3"
+            />
           </div>
 
           {/* Checkboxes */}
@@ -181,14 +216,14 @@ export default function CreateProduct() {
             </label>
             <label className="flex items-center space-x-2">
               <input type="checkbox" name="status" checked={formData.status} onChange={handleChange} />
-              <span>Status</span>
+              <span>{formData.status ? "Active" : "Inactive"}</span>
             </label>
           </div>
 
           <div className="flex justify-end gap-4 mt-6">
             <button
               type="button"
-              onClick={() => window.history.back()} // or navigate to another route if using react-router
+              onClick={() => window.history.back()}
               className="px-4 py-2 border rounded hover:bg-gray-100"
             >
               Cancel
@@ -200,51 +235,8 @@ export default function CreateProduct() {
               Save Product
             </button>
           </div>
-
         </form>
       </div>
-
-      {/* Modals */}
-      {showBrandModal && (
-        <BrandModal
-          onClose={() => setShowBrandModal(false)}
-          onSave={(newBrand) => {
-            setBrands([...brands, { _id: Date.now(), name: newBrand }]);
-            setFormData({ ...formData, brand: newBrand });
-            setShowBrandModal(false);
-          }}
-        />
-      )}
-
-      {showCategoryModal && (
-        <CategoryModal
-          onClose={() => setShowCategoryModal(false)}
-          onSave={(newCat) => {
-            setCategories([...categories, { _id: Date.now(), name: newCat }]);
-            setFormData({ ...formData, category: newCat });
-            setShowCategoryModal(false);
-          }}
-        />
-      )}
-
-      {showSubcategoryModal && (
-        <SubcategoryModal
-          onClose={() => setShowSubcategoryModal(false)}
-          onSave={(newSub) => {
-            setSubcategories([...subcategories, { _id: Date.now(), name: newSub }]);
-            setFormData({ ...formData, subcategory: newSub });
-            setShowSubcategoryModal(false);
-          }}
-        />
-      )}
     </div>
   );
 }
-
-// Reusable input field component
-const InputField = ({ label, name, value, onChange, type = "text" }) => (
-  <div>
-    <label className="block text-gray-700">{label}</label>
-    <input type={type} name={name} value={value} onChange={onChange} className='w-full p-2 border rounded' required />
-  </div>
-);

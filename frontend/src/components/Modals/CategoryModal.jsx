@@ -1,77 +1,34 @@
 import React, { useState } from 'react';
 
-export default function CategoryModal({ onClose, onSave, existingCategories = [] }) {
-  const [categorySearch, setCategorySearch] = useState('');
-  const [categories, setCategories] = useState(existingCategories);
-  const [selectedCategory, setSelectedCategory] = useState('');
-
-  const filteredCategories = categories
-    .filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+const CategoryModal = ({ onClose, onSave }) => {
+  const [categoryName, setCategoryName] = useState("");
 
   const handleSave = () => {
-    if (selectedCategory) {
-      onSave(selectedCategory);
-    }
-  };
-
-  const handleAddNew = () => {
-    const newCategory = prompt("Enter new category name:");
-    if (newCategory) {
-      const newCategoryObj = { _id: Date.now(), name: newCategory };
-      const updatedCategories = [...categories, newCategoryObj];
-      setCategories(updatedCategories);
-      setSelectedCategory(newCategory);
-    }
+    if (categoryName.trim() === "") return; // Don't save empty categories
+    onSave(categoryName);
+    setCategoryName(""); // Reset field after saving
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Select Category</h2>
-        <input
-          type="text"
-          placeholder="Search category..."
-          value={categorySearch}
-          onChange={(e) => setCategorySearch(e.target.value)}
-          className="w-full p-2 border mb-3 rounded"
-        />
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
-        >
-          <option value="">Select a category</option>
-          {filteredCategories.map((c) => (
-            <option key={c._id} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <div className="flex justify-between">
-          <button
-            onClick={handleAddNew}
-            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-          >
-            + Add New Category
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border rounded hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={!selectedCategory}
-            >
-              Save
-            </button>
-          </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg w-96">
+        <h3 className="text-xl font-semibold mb-4">Add New Category</h3>
+        <div className="mb-4">
+          <label className="block text-gray-700">Category Name</label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end space-x-4">
+          <button onClick={onClose} className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+          <button onClick={handleSave} className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">Save</button>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default CategoryModal;

@@ -10,7 +10,7 @@ router.post("/register", async (req, res) => {
 
   try {
     const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
+    if (userExists) return res.status(400).json({ message: "User already exists",succsess: false });
 
     const user = new User({ name, email, password });
     await user.save();
@@ -33,7 +33,7 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials", succsess: false });
     }
 
     const token = jwt.sign({ user: { id: user._id, role: user.role } }, process.env.JWT_SECRET, { expiresIn: "40h" });

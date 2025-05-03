@@ -1,77 +1,34 @@
 import React, { useState } from 'react';
 
-export default function SubcategoryModal({ onClose, onSave, existingSubcategories = [] }) {
-  const [subcategorySearch, setSubcategorySearch] = useState('');
-  const [subcategories, setSubcategories] = useState(existingSubcategories);
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
-
-  const filteredSubcategories = subcategories
-    .filter(s => s.name.toLowerCase().includes(subcategorySearch.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+const SubcategoryModal = ({ onClose, onSave }) => {
+  const [subcategoryName, setSubcategoryName] = useState("");
 
   const handleSave = () => {
-    if (selectedSubcategory) {
-      onSave(selectedSubcategory);
-    }
-  };
-
-  const handleAddNew = () => {
-    const newSubcategory = prompt("Enter new subcategory name:");
-    if (newSubcategory) {
-      const newSubcategoryObj = { _id: Date.now(), name: newSubcategory };
-      const updatedSubcategories = [...subcategories, newSubcategoryObj];
-      setSubcategories(updatedSubcategories);
-      setSelectedSubcategory(newSubcategory);
-    }
+    if (subcategoryName.trim() === "") return; // Don't save empty subcategories
+    onSave(subcategoryName);
+    setSubcategoryName(""); // Reset field after saving
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Select Subcategory</h2>
-        <input
-          type="text"
-          placeholder="Search subcategory..."
-          value={subcategorySearch}
-          onChange={(e) => setSubcategorySearch(e.target.value)}
-          className="w-full p-2 border mb-3 rounded"
-        />
-        <select
-          value={selectedSubcategory}
-          onChange={(e) => setSelectedSubcategory(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
-        >
-          <option value="">Select a subcategory</option>
-          {filteredSubcategories.map((s) => (
-            <option key={s._id} value={s.name}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <div className="flex justify-between">
-          <button
-            onClick={handleAddNew}
-            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-          >
-            + Add New Subcategory
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border rounded hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={!selectedSubcategory}
-            >
-              Save
-            </button>
-          </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg w-96">
+        <h3 className="text-xl font-semibold mb-4">Add New Subcategory</h3>
+        <div className="mb-4">
+          <label className="block text-gray-700">Subcategory Name</label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded"
+            value={subcategoryName}
+            onChange={(e) => setSubcategoryName(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end space-x-4">
+          <button onClick={onClose} className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+          <button onClick={handleSave} className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">Save</button>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default SubcategoryModal;
