@@ -26,4 +26,15 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Get All
+router.get("/", async (req, res) => {
+  try {
+    const brands = await Brand.find(); // Correct reference to the model
+    res.status(200).json(brands);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching brands" });
+  }
+});
+
 module.exports = router;

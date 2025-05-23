@@ -37,14 +37,13 @@ router.post("/", protect, async (req, res) => {
 // Get All Subcategories
 router.get("/", async (req, res) => {
   try {
-    // Fetch subcategories (no category population needed)
     const subcategories = await Subcategory.find();
     res.status(200).json(subcategories);
   } catch (error) {
-    console.error("Error fetching subcategories:", error);
     res.status(500).json({ message: "Error fetching subcategories" });
   }
 });
+
 
 // Update Subcategory
 router.put("/:id", protect, async (req, res) => {

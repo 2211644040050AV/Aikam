@@ -1,10 +1,14 @@
 import React from 'react';
 import { FaBox, FaClipboardList, FaSignOutAlt, FaStore, FaUser } from 'react-icons/fa';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 
 export default function AdminSidebar() {
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const hideNavOnRoutes = ["/create-product"]
+
+  const shouldHideNav = hideNavOnRoutes.includes(location.pathname);
 
   const handleLogout = () => {
     navigate("/");

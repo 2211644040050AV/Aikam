@@ -53,8 +53,8 @@ export default function App() {
             <Route index element={<AdminHome />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="products" element={<ProductManagement />} />
-            <Route path="create" element={<AddProduct />} />
-            <Route path="update" element={<UpdateProduct />} />
+            <Route path="create-product" element={<AddProduct />} />
+            <Route path="update-product" element={<UpdateProduct />} />
           </Route>
 
           {/* Fallback Route */}

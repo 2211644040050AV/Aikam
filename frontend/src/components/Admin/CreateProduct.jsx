@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function InputField({ label, name, value, onChange, type = "text" }) {
+function InputField({ label, name, value, onChange, type = 'text' }) {
   return (
     <div className="mb-4">
       <label className="block text-gray-700">{label}</label>
@@ -23,7 +23,7 @@ export default function CreateProduct() {
     brand: '',
     category: '',
     subcategory: '',
-    image: null,
+    image: '',
     stock: '',
     price: '',
     discount: '',
@@ -37,19 +37,19 @@ export default function CreateProduct() {
     sideEffects: '',
     description: '',
     prescriptionRequired: false,
-    status: true
+    status: true,
   });
 
   const [imagePreview, setImagePreview] = useState(null);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchOptions();
   }, []);
 
-  // Fetch data from API
   const fetchOptions = async () => {
     try {
       const [brandRes, categoryRes, subcategoryRes] = await Promise.all([
@@ -58,98 +58,129 @@ export default function CreateProduct() {
         axios.get('http://localhost:9000/api/subcategories'),
       ]);
 
-      console.log('Brands:', brandRes.data);
-      console.log('Categories:', categoryRes.data);
-      console.log('Subcategories:', subcategoryRes.data);
-
-      if (brandRes.data) setBrands(brandRes.data);
-      if (categoryRes.data) setCategories(categoryRes.data);
-      if (subcategoryRes.data) setSubcategories(subcategoryRes.data);
+      setBrands(brandRes.data || []);
+      setCategories(categoryRes.data || []);
+      setSubcategories(subcategoryRes.data || []);
     } catch (err) {
       console.error('Error fetching options:', err);
     }
   };
 
-  // Handle input changes
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else if (type === 'file') {
       const file = files[0];
-      setFormData(prev => ({ ...prev, image: file }));
-      setImagePreview(URL.createObjectURL(file));
-    } else {
-      if (name === 'category') {
-        // Reset subcategory when category is changed
-        setFormData(prev => {
-          console.log('Category changed, resetting subcategory');
-          return { ...prev, category: value, subcategory: '' };
-        });
-      } else {
-        setFormData(prev => {
-          console.log(`${name} changed to: ${value}`);
-          return { ...prev, [name]: value };
-        });
+
+      if (!file) {
+        setFormData((prev) => ({ ...prev, image: '' }));
+        setImagePreview(null);
+        return;
       }
+
+      // Validate allowed image types
+      const allowedTypes = ['image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Only JPG and PNG images are allowed.');
+        return;
+      }
+
+      setUploading(true);
+      const data = new FormData();
+      data.append('file', file);
+      data.append('upload_preset', 'aikam_preset'); // Make sure this preset allows JPG/PNG uploads
+
+      try {
+        const res = await axios.post(
+          'https://api.cloudinary.com/v1_1/dxufc1uiy/image/upload',
+          data
+        );
+
+        setFormData((prev) => ({ ...prev, image: res.data.secure_url }));
+        setImagePreview(res.data.secure_url);
+      } catch (err) {
+        console.error('Cloudinary upload error:', err.response?.data || err.message);
+        alert('Image upload failed. Please check your Cloudinary preset settings.');
+        setFormData((prev) => ({ ...prev, image: '' }));
+        setImagePreview(null);
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        ...(name === 'category' ? { subcategory: '' } : {}),
+      }));
     }
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const data = new FormData();
-    for (const key in formData) {
-      if (key === "image" && formData.image) {
-        data.append("image", formData.image);
-      } else {
-        data.append(key, formData[key]);
-      }
+  
+    const token = localStorage.getItem('token'); // get real token from storage
+  
+    if (!token) {
+      alert('You are not authenticated. Please login first.');
+      return;
     }
-
+  
     try {
-      const res = await axios.post('http://localhost:9000/api/products', data, {
+      const res = await axios.post('http://localhost:9000/api/products', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
       });
-      alert("Product created successfully!");
+  
+      alert('Product created successfully!');
       console.log(res.data);
     } catch (err) {
-      console.error("Product creation failed:", err);
-      alert("Product creation failed!");
+      console.error('Product creation failed:', err);
+      if (err.response?.status === 401) {
+        alert('Unauthorized: Please login again.');
+      } else {
+        alert('Product creation failed! Please try again.');
+      }
     }
   };
+  
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
       <div className="p-3 bg-white shadow rounded-lg mb-8">
         <form onSubmit={handleSubmit}>
-          {/* Name & Model */}
           <InputField label="Product Name" name="name" value={formData.name} onChange={handleChange} />
           <InputField label="Model Number" name="modelNumber" value={formData.modelNumber} onChange={handleChange} />
 
-          {/* Brand, Category, Subcategory Selects */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="mb-4">
               <label className="block text-gray-700">Brand</label>
               <select name="brand" value={formData.brand} onChange={handleChange} className="w-full p-2 border rounded">
                 <option value="">Select a brand</option>
-                {brands.map(b => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
+                {brands.map((b) => (
+                  <option key={b._id} value={b._id}>
+                    {b.name}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="mb-4">
               <label className="block text-gray-700">Category</label>
-              <select name="category" value={formData.category} onChange={handleChange} className="w-full p-2 border rounded">
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              >
                 <option value="">Select a category</option>
-                {categories.map(c => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -163,25 +194,43 @@ export default function CreateProduct() {
                 className="w-full p-2 border rounded"
               >
                 <option value="">Select a subcategory</option>
-                {subcategories
-                  .filter(sc => sc.category._id === formData.category) // Filtering subcategories based on selected category
-                  .map(sc => (
-                    <option key={sc._id} value={sc._id}>
-                      {sc.name}
-                    </option>
-                  ))}
+                {subcategories.map((sc) => (
+                  <option key={sc._id} value={sc._id}>
+                    {sc.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* Image Upload */}
           <div className="mb-4">
             <label className="block text-gray-700">Product Image</label>
-            <input type="file" accept="image/*" onChange={handleChange} name="image" className="w-full p-2 border rounded" />
-            {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 w-40 h-40 object-cover rounded border" />}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleChange}
+              name="image"
+              className="w-full p-2 border rounded"
+              disabled={uploading}
+            />
+            {uploading && <p className="text-sm text-blue-500">Uploading image...</p>}
+            {imagePreview && (
+              <div className="mt-2">
+                <img src={imagePreview} alt="Preview" className="w-40 h-40 object-cover rounded border" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, image: '' }));
+                    setImagePreview(null);
+                  }}
+                  className="mt-1 text-sm text-red-500"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Other fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField label="Stock" name="stock" value={formData.stock} onChange={handleChange} />
             <InputField label="Price" name="price" value={formData.price} onChange={handleChange} />
@@ -196,7 +245,6 @@ export default function CreateProduct() {
             <InputField label="Side Effects" name="sideEffects" value={formData.sideEffects} onChange={handleChange} />
           </div>
 
-          {/* Description */}
           <div className="mb-4 mt-4">
             <label className="block text-gray-700">Description</label>
             <textarea
@@ -208,15 +256,19 @@ export default function CreateProduct() {
             />
           </div>
 
-          {/* Checkboxes */}
           <div className="flex items-center space-x-4 mb-4">
             <label className="flex items-center space-x-2">
-              <input type="checkbox" name="prescriptionRequired" checked={formData.prescriptionRequired} onChange={handleChange} />
+              <input
+                type="checkbox"
+                name="prescriptionRequired"
+                checked={formData.prescriptionRequired}
+                onChange={handleChange}
+              />
               <span>Prescription Required</span>
             </label>
             <label className="flex items-center space-x-2">
               <input type="checkbox" name="status" checked={formData.status} onChange={handleChange} />
-              <span>{formData.status ? "Active" : "Inactive"}</span>
+              <span>{formData.status ? 'Active' : 'Inactive'}</span>
             </label>
           </div>
 
@@ -230,7 +282,8 @@ export default function CreateProduct() {
             </button>
             <button
               type="submit"
-              className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+              disabled={uploading}
+              className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 disabled:opacity-50"
             >
               Save Product
             </button>
