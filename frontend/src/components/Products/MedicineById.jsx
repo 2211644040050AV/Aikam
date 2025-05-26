@@ -1,105 +1,109 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import axios from "axios";
 
 const MedicineById = ({ setCartDrawerOpen }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [isAlreadyAdded, setIsAlreadyAdded] = useState(false);
 
-  const navigate = useNavigate();
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const { data } = await axios.get(`http://localhost:9000/api/products/${id}`);
+        console.log("Fetched product data:", data);
+        // Adjust this based on your API shape:
+        setProduct(data.product || data);
+      } catch (err) {
+        toast.error("Product not found.");
+        navigate("/collection");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id, navigate]);
 
-  const product = {
-    id: 21,
-    name: "Paracetamol 500mg",
-    price: 100,
-    discount: 20,
-    stock: 8,
-    brand: "MediLife",
-    modelNumber: "P500X",
-    category: "Medicine",
-    subcategory: "Pain Relief",
-    deliveryCharge: 20,
-    description: "Paracetamol is used to treat mild to moderate pain and fever. Effective in headaches, muscle aches, and toothaches.",
-    image: "https://picsum.photos/500/500?random=21",
-  };
-
-  const price = product.price;
-  const discount = product.discount;
-  const salePrice = price - (price * discount) / 100;
-  const youSave = price - salePrice;
-
+  // Check if already in cart
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    const already = cart.find((item) => item.product.id === product.id);
-    if (already) {
-      setIsAlreadyAdded(true);
-    }
-  }, []);
+    const alreadyInCart = cart.some((item) => item.product._id === id);
+    setIsAlreadyAdded(alreadyInCart);
+  }, [id]);
+
+  // Quantity & Price Calculation
+  const price = Number(product?.price || 0);
+  const discount = Number(product?.discount || 0);
+  const salePrice = price - (price * discount) / 100;
+  const youSave = price - salePrice;
+  const totalPrice = salePrice * quantity;
 
   const increaseQty = () => {
-    if (quantity < product.stock && quantity < 5 && !isAlreadyAdded) {
-      setQuantity(quantity + 1);
+    if (quantity < Math.min(product.stock, 5)) {
+      setQuantity((q) => q + 1);
     }
   };
 
   const decreaseQty = () => {
-    if (quantity > 1 && !isAlreadyAdded) {
-      setQuantity(quantity - 1);
+    if (quantity > 1) {
+      setQuantity((q) => q - 1);
     }
   };
 
   const handleAddToCart = (e) => {
-    e.preventDefault(); // important to stop refresh
-  
-    if (quantity <= 0) {
-      toast.error("Please select a valid quantity.");
-    } else if (quantity > product.stock) {
-      toast.error(`Only ${product.stock} items available in stock.`);
-    } else {
-      setIsButtonDisabled(true);
-  
-      const cartItem = { product, quantity, totalPrice: salePrice * quantity }; // Add totalPrice here
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      cart.push(cartItem);
-      localStorage.setItem("cart", JSON.stringify(cart));
-  
-      toast.success(`${quantity} ${product.name} added to cart.`);
-      setIsButtonDisabled(false);
-      setIsAlreadyAdded(true);
-  
-      window.dispatchEvent(new Event("cart-updated")); // Update cart globally
-      setCartDrawerOpen(true); // 🚀 Open Cart Drawer here
+    e.preventDefault();
+    if (quantity <= 0) return toast.error("Invalid quantity.");
+    if (quantity > product.stock)
+      return toast.error(`Only ${product.stock} items available.`);
 
-      navigate("/cart"); // Redirect to cart after adding item
-    }
+    setIsButtonDisabled(true);
+
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.push({ product, quantity, totalPrice });
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    toast.success(`${quantity} ${product.name} added to cart.`);
+    setIsAlreadyAdded(true);
+    setCartDrawerOpen(true);
+    window.dispatchEvent(new Event("cart-updated"));
+    navigate("/cart");
   };
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!product) return <div className="p-6">Product not found.</div>;
+
+  // Fix image URL (prepend backend URL if relative path)
+  const imageUrl = product.image?.url
+    ? product.image.url.startsWith("http")
+      ? product.image.url
+      : `http://localhost:9000${product.image.url}`
+    : "/placeholder.png";
 
   return (
     <div className="container mx-auto mt-6 mb-6 p-6 border rounded-lg shadow-md">
       <div className="flex flex-col md:flex-row">
-        {/* Image Section */}
+        {/* Left: Image */}
         <div className="md:w-1/2 text-center mb-6 md:mb-0">
           <img
-            src={product.image}
+            src={imageUrl}
             alt={product.name}
-            className="w-full max-h-80 object-contain transition-transform duration-300 transform hover:scale-105 mb-4"
+            className="w-full max-h-80 object-contain"
           />
-          <h6 className="text-lg font-semibold">{product.name}</h6>
+          <h6 className="text-lg font-semibold mt-2">{product.name}</h6>
         </div>
 
-        {/* Product Details */}
+        {/* Right: Info */}
         <div className="md:w-1/2 md:pl-8">
           <h2 className="text-2xl font-bold mb-3">{product.name}</h2>
 
-          <div className="mb-3 flex items-center gap-2">
-            <span className="bg-green-500 text-white py-1 px-2 rounded">
-              4.6 <i className="fa fa-star"></i>
-            </span>
-            <span>| {product.modelNumber}</span>
-          </div>
-
-          <div className="mb-3">
+          <div className="mb-2">
             <span className="text-green-600 font-bold text-xl">
               ₹ {salePrice.toFixed(2)}
             </span>
@@ -110,113 +114,114 @@ const MedicineById = ({ setCartDrawerOpen }) => {
             <div className="text-sm text-gray-600">
               You Save ₹ {youSave.toFixed(2)}
             </div>
+            <div className="text-sm text-gray-600">
+              Total Price: ₹ {totalPrice.toFixed(2)}
+            </div>
           </div>
 
-          {/* Stock Info */}
-          <div className="mb-4">
-            {product.stock > 0 && product.stock <= 10 && (
+          {/* Stock Indicator */}
+          <div className="mb-2">
+            {product.stock <= 0 ? (
+              <span className="text-yellow-600 font-bold">Out of Stock</span>
+            ) : product.stock <= 10 ? (
               <span className="text-red-600 font-bold">
                 Only {product.stock} Left
               </span>
-            )}
-            {product.stock > 10 && (
-              <span className="text-green-600 font-bold">In-Stock</span>
-            )}
-            {product.stock <= 0 && (
-              <span className="text-yellow-600 font-bold">Out of Stock</span>
-            )}
-          </div>
-
-          {/* Basic Details */}
-          <div className="mb-4">
-            <strong>Brand:</strong> {product.brand} <br />
-            <strong>Category:</strong> {product.category} <br />
-            <strong>Item Type:</strong> {product.subcategory}
-          </div>
-
-          {/* Delivery Charges */}
-          <div className="mb-4 font-semibold">
-            Delivery Charges:{" "}
-            {product.deliveryCharge ? (
-              `₹ ${product.deliveryCharge}`
             ) : (
-              <>
-                Free <i className="fa fa-thumbs-up text-green-500 ml-1"></i>
-              </>
+              <span className="text-green-600 font-bold">In Stock</span>
             )}
           </div>
 
-          {/* Description */}
-          <div className="mb-6">
-            <h5 className="text-lg font-semibold mb-1">Description</h5>
+          {/* Product Details */}
+          <div className="mb-2 text-sm">
+            <strong>Brand:</strong> {product.brand} <br />
+            <strong>Model:</strong> {product.modelNumber} <br />
+            <strong>Type:</strong> {product.subcategory}
+          </div>
+
+          <div className="mb-2">
+            Delivery Charges:{" "}
+            {product.deliveryCharge ? `₹ ${product.deliveryCharge}` : "Free"}
+          </div>
+
+          <div className="mb-4 text-sm">
+            <strong>Description:</strong>
             <p className="text-gray-700">{product.description}</p>
           </div>
 
-          {/* Quantity Controls */}
-          <div className="flex items-center mb-6">
+          {/* Quantity Selector */}
+          <div className="flex items-center mb-4">
             <button
               onClick={decreaseQty}
-              disabled={isAlreadyAdded}
-              className={`bg-gray-300 p-2 rounded-l-md ${
-                isAlreadyAdded ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-400"
-              }`}
+              disabled={quantity <= 1}
+              className="bg-gray-300 p-2 rounded-l-md"
             >
-              <i className="fa fa-minus"></i>
+              <i className="fa fa-minus" />
             </button>
             <input
               type="text"
               value={quantity}
               readOnly
-              disabled={isAlreadyAdded}
               className="w-12 text-center p-2 border-t border-b"
             />
             <button
               onClick={increaseQty}
-              disabled={isAlreadyAdded}
-              className={`bg-gray-300 p-2 rounded-r-md ${
-                isAlreadyAdded ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-400"
-              }`}
+              disabled={quantity >= product.stock || quantity >= 5}
+              className="bg-gray-300 p-2 rounded-r-md"
             >
-              <i className="fa fa-plus"></i>
+              <i className="fa fa-plus" />
             </button>
           </div>
 
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="grid grid-cols-2 gap-4">
             {isAlreadyAdded ? (
-              <button
-                disabled
-                className="bg-green-500 text-white p-3 rounded-md flex items-center justify-center cursor-not-allowed"
-              >
-                <i className="fa fa-check mr-2"></i> Already in Cart
+              <button disabled className="bg-green-500 text-white p-3 rounded-md">
+                <i className="fa fa-check mr-2" /> Already in Cart
               </button>
             ) : (
               <button
                 onClick={handleAddToCart}
                 disabled={isButtonDisabled}
-                className={`bg-yellow-500 text-white p-3 rounded-md flex items-center justify-center ${
-                  isButtonDisabled
-                    ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-yellow-400 hover:text-white"
-                }`}
+                className={`bg-yellow-500 text-white p-3 rounded-md ${isButtonDisabled ? "opacity-50" : "hover:bg-yellow-400"
+                  }`}
               >
                 {isButtonDisabled ? (
                   "Adding..."
                 ) : (
                   <>
-                    <i className="fa fa-cart-plus mr-2"></i> Add to Cart
+                    <i className="fa fa-cart-plus mr-2" /> Add to Cart
                   </>
                 )}
               </button>
             )}
 
-            <Link
-              to="/place-order"
-              className="bg-blue-500 hover:bg-blue-400 text-white p-3 rounded-md flex items-center justify-center"
+            <button
+              onClick={() => {
+                const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+
+                if (!userInfo || !userInfo.token) {
+                  toast.error("Please login before proceeding to checkout.");
+      navigate("/login?redirect=/checkout");
+                  return;
+                }
+
+                if (product.stock <= 0) {
+                  toast.error("This product is out of stock. Cannot proceed to checkout.");
+                  return;
+                }
+
+                navigate("/checkout");
+              }}
+              disabled={product.stock <= 0}
+              className={`bg-blue-500 text-white p-3 rounded-md text-center ${product.stock <= 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-400"
+                }`}
             >
-              <i className="fa fa-bolt mr-2"></i> Continue Shopping
-            </Link>
+              Proceed to Checkout
+            </button>
+
           </div>
+
         </div>
       </div>
     </div>

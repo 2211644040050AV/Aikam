@@ -3,34 +3,26 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { motion } from 'framer-motion';
 import Slider from "react-slick";
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 export default function Medicines() {
   const sliderRef = useRef(null);
-  const [medicines, setMedicines] = useState([]);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // Dummy medicines data
-    const dynamicMedicines = [
-      { _id: "1", name: "Jacket", price: 120, images: [{ url: "https://picsum.photos/500/550?random=1" }] },
-      { _id: "2", name: "Shirt", price: 80, images: [{ url: "https://picsum.photos/500/550?random=2" }] },
-      { _id: "3", name: "Pants", price: 150, images: [{ url: "https://picsum.photos/500/550?random=3" }] },
-      { _id: "4", name: "Sneakers", price: 180, images: [{ url: "https://picsum.photos/500/550?random=4" }] },
-      { _id: "5", name: "Sweater", price: 200, images: [{ url: "https://picsum.photos/500/550?random=5" }] },
-      { _id: "6", name: "Hat", price: 50, images: [{ url: "https://picsum.photos/500/550?random=6" }] },
-      { _id: "7", name: "Gloves", price: 40, images: [{ url: "https://picsum.photos/500/550?random=7" }] },
-      { _id: "8", name: "Scarf", price: 60, images: [{ url: "https://picsum.photos/500/550?random=8" }] },
-      { _id: "9", name: "Backpack", price: 220, images: [{ url: "https://picsum.photos/500/550?random=9" }] },
-      { _id: "10", name: "Socks", price: 20, images: [{ url: "https://picsum.photos/500/550?random=10" }] },
-      { _id: "11", name: "Boots", price: 300, images: [{ url: "https://picsum.photos/500/550?random=11" }] },
-      { _id: "12", name: "Cap", price: 70, images: [{ url: "https://picsum.photos/500/550?random=12" }] },
-      { _id: "13", name: "Glasses", price: 250, images: [{ url: "https://picsum.photos/500/550?random=13" }] },
-    ];
-    setMedicines(dynamicMedicines); // Populating the data
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get('http://localhost:9000/api/products');
+        setProducts(res.data);
+      } catch (error) {
+        console.error("Failed to fetch products", error);
+      }
+    };
+    fetchProducts();
   }, []);
 
-  // Slick slider settings
   const settings = {
     dots: false,
     infinite: true,
@@ -42,14 +34,8 @@ export default function Medicines() {
     arrows: false,
     pauseOnHover: true,
     responsive: [
-      {
-        breakpoint: 1024,
-        settings: { slidesToShow: 2 },
-      },
-      {
-        breakpoint: 640,
-        settings: { slidesToShow: 1 },
-      },
+      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 640, settings: { slidesToShow: 1 } },
     ],
   };
 
@@ -95,7 +81,7 @@ export default function Medicines() {
       {/* Slider */}
       <div className="container mx-auto">
         <Slider ref={sliderRef} {...settings}>
-          {medicines.map((product) => (
+          {products.map((product) => (
             <motion.div
               key={product._id}
               initial={{ opacity: 0, y: 20 }}
@@ -106,12 +92,17 @@ export default function Medicines() {
             >
               <div className="relative group">
                 <img
-                  src={product.images[0].url}
+                  src={
+                    product.images?.[0]?.url ||
+                    (product.image?.data
+                      ? `data:${product.image.contentType};base64,${product.image.data}`
+                      : 'https://via.placeholder.com/500x550')
+                  }
                   alt={product.name}
                   className="w-full h-[500px] object-cover rounded shadow-md transition duration-300 group-hover:scale-105"
                   draggable="false"
                 />
-                <div className="absolute bottom-0 left-0 right-0  bg-opacity-50 text-white p-4 rounded-b-lg">
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white p-4 rounded-b-lg">
                   <Link to={`/product/${product._id}`} className="block">
                     <h4 className="font-medium">{product.name}</h4>
                     <p className="mt-1">₹{product.price}</p>
